@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mrs.大好き_飛行機好き - Official Website</title>
     <style>
-        /* ==========================================
-           全体スタイル / デザイン
-           ========================================== */
+        /* 全体スタイル */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -94,12 +92,13 @@
             border: none;
             cursor: pointer;
             transition: background-color 0.2s;
+            font-size: 1rem;
         }
         .button:hover {
             background-color: #1b5e20;
         }
 
-        /* 音符アニメーション装飾 */
+        /* 音符装飾 */
         .music-note {
             position: absolute;
             font-size: 1.5rem;
@@ -109,7 +108,7 @@
         .note2 { top: 20%; right: 12%; }
         .note3 { bottom: 15%; left: 15%; }
 
-        /* カウンター表示エリア */
+        /* アクセスカウンター */
         .counter-box {
             display: inline-block;
             background: rgba(255, 255, 255, 0.85);
@@ -121,7 +120,7 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
 
-        /* カード・グリッド関連 */
+        /* カード・グリッド */
         .about-card, .youtube-card {
             background: #ffffff;
             padding: 2rem;
@@ -166,23 +165,24 @@
         .comment-section {
             background: #ffffff;
             border-radius: 12px;
-            padding: 2rem 1rem;
+            padding: 2rem 1.5rem;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             margin-top: 1rem;
         }
         .comment-form {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             max-width: 500px;
-            margin: 0 auto 20px auto;
+            margin: 0 auto 25px auto;
         }
         .comment-form input, .comment-form textarea {
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ccc;
             border-radius: 8px;
             font-size: 0.95rem;
             width: 100%;
+            font-family: inherit;
         }
         .comment-list {
             max-width: 500px;
@@ -190,17 +190,19 @@
             text-align: left;
         }
         .comment-item {
-            background: #f9f9f9;
-            border: 1px solid #e0e0e0;
+            background: #f8faf8;
+            border: 1px solid #e2e8e2;
             padding: 12px 15px;
             border-radius: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .comment-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed #e0e0e0;
         }
         .comment-name {
             font-weight: bold;
@@ -214,6 +216,7 @@
             font-size: 0.95rem;
             white-space: pre-wrap;
             word-break: break-all;
+            margin-top: 4px;
         }
 
         .end-section {
@@ -252,7 +255,7 @@
                     「ミセス大好き飛行機好き」のホームページです。
                 </p>
                 
-                <!-- 総閲覧者数カウンター表示エリア -->
+                <!-- カウンター表示 -->
                 <div class="counter-box">
                     👀 総閲覧者数: <span id="visitor-count">1</span> 人
                 </div>
@@ -333,13 +336,13 @@
             <p class="section-label">COMMUNITY</p>
             <h2>コメント欄</h2>
             <div class="comment-section">
-                <form id="comment-form" class="comment-form" onsubmit="addComment(event)">
+                <form id="comment-form" class="comment-form">
                     <input type="text" id="comment-name" placeholder="お名前" required>
                     <textarea id="comment-text" rows="3" placeholder="コメントを入力してください..." required></textarea>
                     <button type="submit" class="button">送信する</button>
                 </form>
                 <div id="comment-list" class="comment-list">
-                    <!-- コメント表示エリア -->
+                    <!-- ここに投稿結果が表示されます -->
                 </div>
             </div>
         </section>
@@ -358,120 +361,119 @@
         <p>Made with HTML / CSS / JavaScript</p>
     </footer>
 
-    <!-- ==========================================
-       JavaScript（処理部分）
-       ========================================== -->
+    <!-- JavaScript 処理 -->
     <script>
-        // --- 1. エラーなしで確実に動く閲覧者数カウンター ---
-        function initVisitorCounter() {
-            const countElement = document.getElementById('visitor-count');
-            if (!countElement) return;
-
-            try {
-                // 保存されている閲覧数を取得（なければ初期値10）
-                let count = parseInt(localStorage.getItem('site_visitor_count') || '10', 10);
-                
-                // 今回のアクセス（ブラウザセッション）でまだカウントされていなければ＋1
-                if (!sessionStorage.getItem('counted_this_session')) {
-                    count += 1;
-                    localStorage.setItem('site_visitor_count', count);
-                    sessionStorage.setItem('counted_this_session', 'true');
-                }
-
-                // 数字を表示
-                countElement.textContent = count.toLocaleString();
-            } catch (error) {
-                // 万が一エラーが起きても必ず「1」を表示
-                countElement.textContent = "1";
-            }
+        // 文字列のエスケープ処理（安全化）
+        function safeText(str) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
         }
 
-        // --- 2. エラーを防ぐ安全なコメント機能 ---
-        function loadComments() {
-            const list = document.getElementById('comment-list');
+        // コメント一覧の読み込みと表示
+        function showComments() {
+            var list = document.getElementById('comment-list');
             if (!list) return;
 
-            list.innerHTML = '';
-            let comments = [];
-
+            var comments = [];
             try {
-                comments = JSON.parse(localStorage.getItem('site_comments') || '[]');
+                var stored = localStorage.getItem('my_comments');
+                if (stored) {
+                    comments = JSON.parse(stored);
+                }
             } catch (e) {
                 comments = [];
             }
-            
+
             if (comments.length === 0) {
                 list.innerHTML = '<p style="color:#888; text-align:center;">まだコメントはありません。</p>';
                 return;
             }
 
-            comments.forEach(c => {
-                const item = document.createElement('div');
-                item.className = 'comment-item';
-                item.innerHTML = `
-                    <div class="comment-header">
-                        <span class="comment-name">${escapeHTML(c.name)}</span>
-                        <span class="comment-date">${c.date}</span>
-                    </div>
-                    <div class="comment-text">${escapeHTML(c.text)}</div>
-                `;
-                list.appendChild(item);
-            });
+            var html = '';
+            for (var i = 0; i < comments.length; i++) {
+                var c = comments[i];
+                html += '<div class="comment-item">';
+                html += '  <div class="comment-header">';
+                html += '    <span class="comment-name">' + safeText(c.name) + '</span>';
+                html += '    <span class="comment-date">' + safeText(c.date) + '</span>';
+                html += '  </div>';
+                html += '  <div class="comment-text">' + safeText(c.text) + '</div>';
+                html += '</div>';
+            }
+            list.innerHTML = html;
         }
 
-        function addComment(e) {
-            e.preventDefault();
-            const nameInput = document.getElementById('comment-name');
-            const textInput = document.getElementById('comment-text');
-
-            if (!nameInput || !textInput) return;
-
-            const name = nameInput.value.trim();
-            const text = textInput.value.trim();
-
-            if (!name || !text) return;
-
-            let comments = [];
-            try {
-                comments = JSON.parse(localStorage.getItem('site_comments') || '[]');
-            } catch (e) {
-                comments = [];
-            }
-
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-            comments.unshift({ name, text, date: dateStr });
+        // アクセスカウンターの表示
+        function setupCounter() {
+            var countSpan = document.getElementById('visitor-count');
+            if (!countSpan) return;
 
             try {
-                localStorage.setItem('site_comments', JSON.stringify(comments));
+                var num = parseInt(localStorage.getItem('my_visitor_num') || '10', 10);
+                if (!sessionStorage.getItem('my_session_visited')) {
+                    num += 1;
+                    localStorage.setItem('my_visitor_num', num.toString());
+                    sessionStorage.setItem('my_session_visited', '1');
+                }
+                countSpan.textContent = num.toLocaleString();
             } catch (e) {
-                alert('コメントの保存に失敗しました。');
+                countSpan.textContent = '1';
             }
-
-            nameInput.value = '';
-            textInput.value = '';
-            loadComments();
         }
 
-        // XSS攻撃・画面崩れ防止のエスケープ関数
-        function escapeHTML(str) {
-            return String(str).replace(/[&<>'"]/g, function(tag) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag] || tag;
-            });
-        }
+        // イベントバインド
+        window.onload = function() {
+            setupCounter();
+            showComments();
 
-        // ページ読み込み完了時に処理を実行
-        document.addEventListener('DOMContentLoaded', function() {
-            initVisitorCounter();
-            loadComments();
-        });
+            var form = document.getElementById('comment-form');
+            if (form) {
+                form.onsubmit = function(event) {
+                    if (event && event.preventDefault) event.preventDefault();
+
+                    var nameEl = document.getElementById('comment-name');
+                    var textEl = document.getElementById('comment-text');
+
+                    var nameVal = nameEl ? nameEl.value.trim() : '';
+                    var textVal = textEl ? textEl.value.trim() : '';
+
+                    if (!nameVal || !textVal) {
+                        alert('お名前とコメントの両方を入力してください。');
+                        return false;
+                    }
+
+                    var comments = [];
+                    try {
+                        var stored = localStorage.getItem('my_comments');
+                        if (stored) comments = JSON.parse(stored);
+                    } catch (e) {
+                        comments = [];
+                    }
+
+                    var d = new Date();
+                    var dateString = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2);
+
+                    comments.unshift({
+                        name: nameVal,
+                        text: textVal,
+                        date: dateString
+                    });
+
+                    try {
+                        localStorage.setItem('my_comments', JSON.stringify(comments));
+                    } catch (e) {
+                        alert('保存処理に失敗しました。');
+                    }
+
+                    if (nameEl) nameEl.value = '';
+                    if (textEl) textEl.value = '';
+
+                    showComments();
+                    return false;
+                };
+            }
+        };
     </script>
 </body>
 </html>
